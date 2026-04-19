@@ -163,32 +163,44 @@ def picker_worker(picker_id):
         })
 
         # ── Step 2: Place fruit in crate (critical section) ──
-        broadcast_lock_status("crate", "LOCKING", name)
-        with sim["crate_lock"]:
-            broadcast_lock_status("crate", "LOCKED", name)
-            time.sleep(1.2)  # Instructional delay to show 'LOCKED' status
-            slot_index = len(sim["crate"])
-            sim["crate"].append(fruit)
-            add_log(f"Picked fruit #{fruit} and placed in crate slot {slot_index + 1}", name)
+        placed = False
+        while not placed and sim["running"]:
+            sim["new_crate_ready"].wait(timeout=1.0)
+            if not sim["running"]:
+                break
 
-            broadcast_event("crate_update", {
-                "picker": picker_id,
-                "fruit": fruit,
-                "slot": slot_index,
-                "crate_id": sim["crate_id"],
-                "crate": list(sim["crate"]),
-            })
+            broadcast_lock_status("crate", "LOCKING", name)
+            with sim["crate_lock"]:
+                if len(sim["crate"]) < CRATE_CAPACITY:
+                    broadcast_lock_status("crate", "LOCKED", name)
+                    time.sleep(1.2)  # Instructional delay to show 'LOCKED' status
+                    slot_index = len(sim["crate"])
+                    sim["crate"].append(fruit)
+                    add_log(f"Picked fruit #{fruit} and placed in crate slot {slot_index + 1}", name)
 
-            # ── Step 3: If crate is full, call the loader ──
-            if len(sim["crate"]) >= CRATE_CAPACITY:
-                add_log(f"Crate is full! Calling loader...", name)
-                broadcast_event("crate_full", {"picker": picker_id, "crate_id": sim["crate_id"]})
-                sim["new_crate_ready"].clear()    # We will need a new crate
-                sim["crate_full"].set()            # Wake the loader
-        broadcast_lock_status("crate", "UNLOCKED", name)
+                    broadcast_event("crate_update", {
+                        "picker": picker_id,
+                        "fruit": fruit,
+                        "slot": slot_index,
+                        "crate_id": sim["crate_id"],
+                        "crate": list(sim["crate"]),
+                    })
+
+                    # ── Step 3: If crate is full, call the loader ──
+                    if len(sim["crate"]) >= CRATE_CAPACITY:
+                        add_log(f"Crate is full! Calling loader...", name)
+                        broadcast_event("crate_full", {"picker": picker_id, "crate_id": sim["crate_id"]})
+                        sim["new_crate_ready"].clear()    # We will need a new crate
+                        sim["crate_full"].set()            # Wake the loader
+                    placed = True
+                else:
+                    # Race condition: crate became full just as we got here
+                    add_log("Crate reached capacity before placement. Waiting for fresh crate...", name)
+            
+            broadcast_lock_status("crate", "UNLOCKED", name)
 
         # Wait outside the lock for the loader to furnish a new crate
-        if slot_index + 1 >= CRATE_CAPACITY:
+        if placed and slot_index + 1 >= CRATE_CAPACITY:
             sim["new_crate_ready"].wait(timeout=10)
 
     # ── Picker is done ──
