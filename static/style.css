@@ -1,0 +1,754 @@
+/* ═══════════════════════════════════════════════
+   Spring Workers — Global Styles
+   ═══════════════════════════════════════════════ */
+
+/* ---------- Reset & Base ---------- */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #F5F0E8;
+    --bg-card: #FFFFFF;
+    --bg-dark: #2C3E3A;
+    --bg-header: #5C3D2E;
+
+    --green: #4A7C59;
+    --green-lt: #5A8F69;
+    --brown: #6B4226;
+    --brown-lt: #8B5E3C;
+
+    --coral: #E07A5F;
+    --orange: #F2A65A;
+    --pink: #E0707E;
+    --teal: #4ECDC4;
+    --purple: #7B68EE;
+
+    --text: #3A2E25;
+    --text-muted: #8A7E75;
+    --text-light: #FAF5EF;
+
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.10);
+}
+
+html {
+    font-size: 15px;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* ---------- Header ---------- */
+#app-header {
+    background: var(--bg-header);
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.logo-icon {
+    font-size: 1.4rem;
+}
+
+#app-header h1 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.breadcrumb {
+    display: flex;
+    gap: 6px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.breadcrumb .sep {
+    opacity: 0.4;
+}
+
+.header-right {
+    display: flex;
+    gap: 8px;
+}
+
+#btn-start,
+#btn-stop,
+#btn-reset {
+    border: none;
+    border-radius: 20px;
+    padding: 7px 22px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#btn-start {
+    background: var(--coral);
+    color: #fff;
+}
+
+#btn-start:hover {
+    background: #c96a50;
+}
+
+#btn-stop {
+    background: var(--coral);
+    color: #fff;
+}
+
+#btn-stop:hover {
+    background: #c96a50;
+}
+
+#btn-reset {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 1rem;
+    padding: 7px 14px;
+}
+
+#btn-reset:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ---------- Main Grid ---------- */
+#app-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 280px 1fr 340px;
+    gap: 16px;
+    padding: 16px 20px;
+    height: calc(100vh - 120px);
+    align-items: stretch;
+    overflow: hidden;
+}
+
+/* ---------- Cards ---------- */
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    overflow: hidden;
+}
+
+.dark-card {
+    background: var(--bg-dark);
+    color: var(--text-light);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.card-icon {
+    font-size: 1.1rem;
+}
+
+.card-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+}
+
+.card-title.light {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.card-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Lock Indicators */
+.lock-indicator {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 12px;
+    transition: all 0.2s ease;
+}
+
+.lock-indicator.idle {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+}
+
+.lock-indicator.locking {
+    background: #FFB703;
+    /* Amber */
+    color: #000;
+    animation: flash 0.5s infinite alternate;
+}
+
+.lock-indicator.locked {
+    background: var(--coral);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(224, 122, 95, 0.3);
+}
+
+@keyframes flash {
+    from {
+        opacity: 0.6;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ---------- Orchard / Tree ---------- */
+#orchard-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+#tree-container {
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 30px;
+}
+
+#tree-shape {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#tree-canopy {
+    width: 230px;
+    height: 200px;
+    background: radial-gradient(ellipse at 50% 55%, #5A8F69 0%, #4A7C59 70%, #3E6B4A 100%);
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 -8px 20px rgba(0, 0, 0, 0.12), 0 4px 15px rgba(74, 124, 89, 0.3);
+}
+
+#tree-trunk {
+    width: 40px;
+    height: 60px;
+    background: linear-gradient(to right, #5A3A1A, #6B4226 40%, #8B5E3C 80%, #6B4226);
+    border-radius: 0 0 8px 8px;
+    margin-top: -6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Fruit grid — sits INSIDE the canopy div */
+#fruit-grid {
+    width: 190px;
+    height: 160px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px;
+    clip-path: ellipse(48% 46% at 50% 50%);
+}
+
+.fruit-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.52rem;
+    font-weight: 700;
+    color: #fff;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: default;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.fruit-dot.picked {
+    transform: scale(0);
+    opacity: 0;
+}
+
+.extra-badge {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    z-index: 3;
+}
+
+/* Fruit color palette */
+.fruit-c0 {
+    background: var(--coral);
+}
+
+.fruit-c1 {
+    background: var(--orange);
+}
+
+.fruit-c2 {
+    background: var(--pink);
+}
+
+.fruit-c3 {
+    background: #E8A87C;
+}
+
+.fruit-c4 {
+    background: #D4776B;
+}
+
+.fruit-c5 {
+    background: #C1666B;
+}
+
+/* ---------- Center Column ---------- */
+#center-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Picker Row */
+#picker-row {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+}
+
+.picker-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px 24px;
+    text-align: center;
+    flex: 1;
+    max-width: 160px;
+    transition: box-shadow 0.3s;
+}
+
+.picker-card.active {
+    box-shadow: var(--shadow-lg);
+}
+
+.picker-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #fff;
+    transition: transform 0.3s;
+}
+
+.picker-card.active .picker-avatar {
+    animation: pulse 1.2s infinite;
+}
+
+.p1 {
+    background: var(--coral);
+}
+
+.p2 {
+    background: var(--teal);
+}
+
+.p3 {
+    background: var(--purple);
+}
+
+.picker-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.picker-card.active .picker-label {
+    color: var(--green);
+}
+
+.picker-card.done .picker-label {
+    color: var(--coral);
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.12);
+    }
+}
+
+/* ---------- Crate Grid ---------- */
+#crate-panel {
+    flex: 1;
+}
+
+#crate-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.crate-slot {
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    background: #F0EBE3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-height: 52px;
+}
+
+.crate-slot.filled {
+    transform: scale(1);
+}
+
+.crate-slot.pop-in {
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ---------- Loader Panel ---------- */
+#loader-panel {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+}
+
+.loader-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.loader-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.loader-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ---------- Right Column ---------- */
+#right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Shipping (Truck) */
+#shipping-panel {
+    min-height: 110px;
+}
+
+#truck-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 50px;
+    align-items: flex-start;
+}
+
+#truck-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+    width: 100%;
+}
+
+.truck-crate {
+    width: 44px;
+    height: 36px;
+    border-radius: 6px;
+    background: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    animation: slideIn 0.5s ease;
+    position: relative;
+}
+
+.truck-crate::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1.5px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.truck-crate-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    justify-content: center;
+}
+
+.truck-crate-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--coral);
+}
+
+@keyframes slideIn {
+    0% {
+        transform: translateX(40px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Activity Log */
+#log-panel {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#log-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    line-height: 1.6;
+    padding: 4px 0;
+}
+
+#log-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+#log-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#log-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.log-entry {
+    padding: 3px 8px;
+    border-radius: 4px;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+    background: rgba(255, 255, 255, 0.04);
+    word-break: break-word;
+}
+
+.log-entry .log-time {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.log-entry .log-agent {
+    font-weight: 700;
+}
+
+.log-agent-PICKER1 {
+    color: var(--coral);
+}
+
+.log-agent-PICKER2 {
+    color: var(--teal);
+}
+
+.log-agent-PICKER3 {
+    color: var(--purple);
+}
+
+.log-agent-LOADER {
+    color: var(--orange);
+}
+
+.log-agent-SYSTEM {
+    color: #aaa;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- Footer Stats ---------- */
+#app-footer {
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    padding: 14px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    background: var(--bg);
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+}
+
+/* ---------- Responsive (smaller screens) ---------- */
+@media (max-width: 1100px) {
+    #app-main {
+        grid-template-columns: 1fr;
+        max-height: none;
+    }
+
+    #orchard-panel {
+        max-width: 320px;
+        margin: 0 auto;
+    }
+
+    #picker-row {
+        flex-wrap: wrap;
+    }
+
+    #right-column {
+        max-height: 400px;
+    }
+}
+
+/* ---------- Utility Animations ---------- */
+.shake {
+    animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-4px);
+    }
+
+    75% {
+        transform: translateX(4px);
+    }
+}

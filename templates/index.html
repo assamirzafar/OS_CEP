@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Workers — Parallel Simulation</title>
+    <meta name="description"
+        content="Interactive OS synchronization simulation: fruit picking with parallel processes, mutual exclusion, and producer-consumer patterns.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════ -->
+    <header id="app-header">
+        <div class="header-left">
+            <div class="logo-icon">🍊</div>
+            <h1>Spring Workers</h1>
+            <nav class="breadcrumb">
+                <span>PARALLEL SIMULATION</span>
+                <span class="sep">›</span>
+                <span>PROCESS ORCHESTRATOR</span>
+                <span class="sep">›</span>
+                <span>OS SYNC ENGINE</span>
+            </nav>
+        </div>
+        <div class="header-right">
+            <button id="btn-start" onclick="startSimulation()">Start</button>
+            <button id="btn-stop" onclick="stopSimulation()" class="hidden">Stop</button>
+            <button id="btn-reset" onclick="resetSimulation()" class="hidden">↻</button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════
+     MAIN GRID
+     ═══════════════════════════════════════════ -->
+    <main id="app-main">
+
+        <!-- LEFT: Orchard / Tree -->
+        <section id="orchard-panel" class="card">
+            <div class="card-header">
+                <span class="card-icon">🌳</span>
+                <span class="card-title">ORCHARD</span>
+                <span id="tree-lock-indicator" class="lock-indicator idle">TREE IDLE</span>
+                <span id="fruits-left-label" class="card-badge">52 Fruits Left</span>
+            </div>
+            <div id="tree-container">
+                <div id="tree-shape">
+                    <div id="tree-canopy">
+                        <div id="fruit-grid"></div>
+                        <div id="extra-fruits" class="extra-badge hidden">+0</div>
+                    </div>
+                    <div id="tree-trunk"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CENTER COLUMN -->
+        <div id="center-column">
+
+            <!-- Picker Status Cards -->
+            <div id="picker-row">
+                <div class="picker-card" id="picker-card-1">
+                    <div class="picker-avatar p1">P1</div>
+                    <div class="picker-label">IDLE</div>
+                </div>
+                <div class="picker-card" id="picker-card-2">
+                    <div class="picker-avatar p2">P2</div>
+                    <div class="picker-label">IDLE</div>
+                </div>
+                <div class="picker-card" id="picker-card-3">
+                    <div class="picker-avatar p3">P3</div>
+                    <div class="picker-label">IDLE</div>
+                </div>
+            </div>
+
+            <!-- Active Crate -->
+            <div id="crate-panel" class="card">
+                <div class="card-header">
+                    <span class="card-title">ACTIVE CRATE</span>
+                    <span id="crate-lock-indicator" class="lock-indicator idle">CRATE IDLE</span>
+                    <span id="crate-slots-label" class="card-badge">0/12 Slots</span>
+                </div>
+                <div id="crate-grid">
+                    <!-- 12 slots rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Loader Status -->
+            <div id="loader-panel" class="card">
+                <div class="loader-avatar">L</div>
+                <div class="loader-info">
+                    <div class="loader-title">Logistics Loader</div>
+                    <div id="loader-status-text" class="loader-subtitle">Waiting for full slots</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT: Shipping + Logs -->
+        <div id="right-column">
+
+            <!-- Shipping Bed -->
+            <section id="shipping-panel" class="card dark-card">
+                <div class="card-header">
+                    <span class="card-title light">SHIPPING BED</span>
+                </div>
+                <div id="truck-area">
+                    <div id="truck-label">Truck staging area</div>
+                    <div id="truck-crates"></div>
+                </div>
+            </section>
+
+            <!-- Activity Log -->
+            <section id="log-panel" class="card dark-card">
+                <div id="log-list"></div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- ═══════════════════════════════════════════
+     FOOTER STATS
+     ═══════════════════════════════════════════ -->
+    <footer id="app-footer">
+        <div class="stat">
+            <span id="stat-shipped" class="stat-value">0</span>
+            <span class="stat-label">UNITS SHIPPED</span>
+        </div>
+        <div class="stat">
+            <span id="stat-remaining" class="stat-value">0</span>
+            <span class="stat-label">REMAINING</span>
+        </div>
+        <div class="stat">
+            <span id="stat-agents" class="stat-value">4</span>
+            <span class="stat-label">TOTAL AGENTS</span>
+        </div>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
