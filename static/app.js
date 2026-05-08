@@ -6,9 +6,9 @@
 */
 
 // ──────────────────────────────────────────────
-// Constants
+// Constants & Globals
 // ──────────────────────────────────────────────
-const CRATE_CAPACITY = 12;
+let CRATE_CAPACITY = 12;
 const MAX_VISIBLE_FRUITS = 24;   // Show at most this many circles on the tree
 const FRUIT_COLORS = ['fruit-c0', 'fruit-c1', 'fruit-c2', 'fruit-c3', 'fruit-c4', 'fruit-c5'];
 const PICKER_COLORS = { 1: 'var(--coral)', 2: 'var(--teal)', 3: 'var(--purple)' };
@@ -335,13 +335,16 @@ function updateLockUI(resource, status, owner) {
 async function startSimulation() {
     if (isRunning) return;
 
-    // Get fruit count (default 52)
-    const numFruits = 52;
+    // Get fruit count and crate capacity from UI inputs
+    const numFruits = parseInt(document.getElementById('input-tree-fruits').value, 10) || 52;
+    const crateCapacity = parseInt(document.getElementById('input-crate-slots').value, 10) || 12;
+
+    CRATE_CAPACITY = crateCapacity;
 
     const resp = await fetch('/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ num_fruits: numFruits }),
+        body: JSON.stringify({ num_fruits: numFruits, crate_capacity: crateCapacity }),
     });
     const result = await resp.json();
     if (result.error) {
@@ -353,6 +356,9 @@ async function startSimulation() {
     btnStart.classList.add('hidden');
     btnStop.classList.remove('hidden');
     btnReset.classList.add('hidden');
+
+    // Init UI crate grid
+    initCrateGrid();
 
     // Clear UI
     logList.innerHTML = '';

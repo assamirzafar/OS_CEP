@@ -27,7 +27,7 @@ app = Flask(__name__)
 # Global Simulation State
 # ──────────────────────────────────────────────
 NUM_FRUITS_DEFAULT = 52          # Default number of fruits on the tree
-CRATE_CAPACITY = 12              # Each crate has 12 slots
+CRATE_CAPACITY_DEFAULT = 12      # Default crate capacity
 NUM_PICKERS = 3                  # Three picker processes
 
 # All mutable simulation state is stored in a dict so we can reset cleanly.
@@ -64,7 +64,7 @@ def broadcast_lock_status(resource, status, owner=""):
     })
 
 
-def reset_simulation(num_fruits=NUM_FRUITS_DEFAULT):
+def reset_simulation(num_fruits=NUM_FRUITS_DEFAULT, crate_capacity=CRATE_CAPACITY_DEFAULT):
     """Initialise / reset all simulation state."""
     global sim
     sim = {
@@ -72,9 +72,10 @@ def reset_simulation(num_fruits=NUM_FRUITS_DEFAULT):
         "tree": list(range(1, num_fruits + 1)),
         "tree_total": num_fruits,
 
-        # Current crate (list of fruit IDs, max CRATE_CAPACITY)
+        # Current crate (list of fruit IDs, max crate_capacity)
         "crate": [],
         "crate_id": 1,              # monotonically increasing crate number
+        "crate_capacity": crate_capacity,
 
         # Truck: list of {"crate_id": int, "fruits": [...]}
         "truck": [],
@@ -171,7 +172,7 @@ def picker_worker(picker_id):
 
             broadcast_lock_status("crate", "LOCKING", name)
             with sim["crate_lock"]:
-                if len(sim["crate"]) < CRATE_CAPACITY:
+                if len(sim["crate"]) < sim["crate_capacity"]:
                     broadcast_lock_status("crate", "LOCKED", name)
                     time.sleep(1.2)  # Instructional delay to show 'LOCKED' status
                     slot_index = len(sim["crate"])
@@ -187,7 +188,7 @@ def picker_worker(picker_id):
                     })
 
                     # ── Step 3: If crate is full, call the loader ──
-                    if len(sim["crate"]) >= CRATE_CAPACITY:
+                    if len(sim["crate"]) >= sim["crate_capacity"]:
                         add_log(f"Crate is full! Calling loader...", name)
                         broadcast_event("crate_full", {"picker": picker_id, "crate_id": sim["crate_id"]})
                         sim["new_crate_ready"].clear()    # We will need a new crate
@@ -200,7 +201,7 @@ def picker_worker(picker_id):
             broadcast_lock_status("crate", "UNLOCKED", name)
 
         # Wait outside the lock for the loader to furnish a new crate
-        if placed and slot_index + 1 >= CRATE_CAPACITY:
+        if placed and slot_index + 1 >= sim["crate_capacity"]:
             sim["new_crate_ready"].wait(timeout=10)
 
     # ── Picker is done ──
@@ -247,7 +248,7 @@ def loader_worker():
         with sim["crate_lock"]:
             broadcast_lock_status("crate", "LOCKED", name)
             time.sleep(1.5)  # Instructional delay to show 'LOCKED' status
-            if len(sim["crate"]) >= CRATE_CAPACITY:
+            if len(sim["crate"]) >= sim["crate_capacity"]:
                 # ── Move full crate to truck ──
                 crate_copy = list(sim["crate"])
                 cid = sim["crate_id"]
@@ -327,11 +328,12 @@ def start_simulation():
     """Start the simulation with optional fruit count."""
     data = request.get_json(silent=True) or {}
     num_fruits = int(data.get("num_fruits", NUM_FRUITS_DEFAULT))
+    crate_capacity = int(data.get("crate_capacity", CRATE_CAPACITY_DEFAULT))
 
     if sim.get("running"):
         return jsonify({"error": "Simulation already running"}), 400
 
-    reset_simulation(num_fruits)
+    reset_simulation(num_fruits, crate_capacity)
     sim["running"] = True
 
     # Launch 3 picker threads + 1 loader thread
