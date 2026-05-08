@@ -8,54 +8,60 @@
 
 ## 1. Executive Summary
 
-The **Spring Workers** simulation is a real-time, web-based demonstration of fundamental Operating System concepts, specifically focused on **Process Synchronization**, **Mutual Exclusion**, and the **Producer-Consumer** pattern. The system simulates a fruit orchard where multiple "Picker" processes (threads) harvest fruits and a "Loader" process manages the logistics of shipping them in crates.
+The **Spring Workers** simulation is a real-time, web-based demonstration of fundamental Operating System concepts, specifically focused on **Process Synchronization**, **Mutual Exclusion**, and the **Producer-Consumer** pattern. The system simulates a fruit orchard where multiple "Picker" processes harvest fruits and a "Loader" process manages the logistics of shipping them in crates. 
+
+Through the use of strictly isolated OS-level processes, the project demonstrates advanced state-sharing across memory boundaries using Inter-Process Communication (IPC).
 
 ---
 
 ## 2. Project Architecture & File Structure
 
-The project follows a standard Web-Backend architecture using Python (Flask) for the engine and Vanilla JavaScript for the visual real-time interface.
+The project follows a robust Web-Backend architecture using Python (Flask) for the web server and process management, and Vanilla JavaScript for the event-driven real-time interface.
 
 ### 2.1 File Overview
 
 ```mermaid
 graph TD
     Root["/ (Project Root)"]
-    Root --> AppPy["app.py (Backend Engine)"]
+    Root --> AppPy["app.py (Backend Engine & IPC)"]
+    Root --> Viva["viva_briefing.md (Project Concepts)"]
     Root --> Static["/static/ (Frontend Assets)"]
     Static --> AppJS["app.js (UI Logic)"]
     Static --> StyleCSS["style.css (Aesthetics)"]
     Root --> Templates["/templates/"]
     Templates --> IndexHTML["index.html (Structure)"]
-    Root --> Deps["requirements.txt & Procfile"]
 ```
 
 ---
 
 ## 3. Core OS Concepts Applied
 
-### 3.1 Parallelism & Multithreading
+### 3.1 Parallelism & Multiprocessing
 
-The simulation uses Python's `threading` library to execute multiple agents concurrently:
+The simulation runs true parallel operations utilizing Python's `multiprocessing` library, escaping the Global Interpreter Lock (GIL) limitation:
 
-- **Pickers (P1, P2, P3)**: Three independent threads simulating parallel processes.
-- **Loader**: A separate logistics thread.
-- **Flask Server**: Handles concurrent HTTP requests and Server-Sent Events (SSE).
+- **Pickers (P1, P2, P3)**: Three independent OS processes simulating concurrent worker agents.
+- **Loader**: A separate logistics OS process.
+- **Flask Server & Broadcast Thread**: The main process that manages HTTP traffic, spawns the workers, and routes events via a Queue.
 
-### 3.2 Mutual Exclusion (Mutex)
+### 3.2 Inter-Process Communication (IPC) & Shared Memory
 
-To prevent race conditions on shared resources, `threading.Lock()` is utilized:
+Because different OS processes do not share memory by default, the project leverages `multiprocessing.Manager()`. This spawns a central server process that holds the actual state (`sim` dictionary, `tree` list, `crate` list) and provides proxies to the Picker and Loader processes so they can safely mutate shared variables.
 
-- **Tree Lock**: Only one picker can remove a fruit from the tree at a time.
-- **Crate Lock**: Ensures that multiple pickers cannot modify the active crate simultaneously, and the loader cannot move the crate while a picker is adding fruit.
+### 3.3 Mutual Exclusion (Mutex)
 
-### 3.3 Signaling & Condition Synchronization
+To prevent race conditions on the shared IPC resources, `multiprocessing.Lock()` is utilized:
 
-We use `threading.Event` to coordinate agent behavior:
+- **Tree Lock**: Only one picker process can pop a fruit from the shared tree array at a time.
+- **Crate Lock**: Ensures that multiple picker processes cannot modify the active crate simultaneously.
 
-- **`crate_full`**: Signaled by a picker to wake up the Loader.
-- **`new_crate_ready`**: Signaled by the Loader to give pickers permission to resume filling.
-- **`all_done`**: Signaled when the tree is bare to let the Loader wrap up.
+### 3.4 Signaling & Condition Synchronization
+
+We use `multiprocessing.Event` to coordinate behavior between the isolated processes:
+
+- **`crate_full`**: Signaled by the picker who adds the target fruit, waking up the sleeping Loader process.
+- **`new_crate_ready`**: Signaled by the Loader to give paused pickers permission to resume.
+- **`all_done`**: Signaled when the tree is bare to trigger the Loader's final cleanup sequence.
 
 ---
 
@@ -63,82 +69,74 @@ We use `threading.Event` to coordinate agent behavior:
 
 ### 4.1 The Producer-Consumer Pattern
 
-The simulation is a classic variation of the Producer-Consumer problem:
+The simulation is an implementation of the Producer-Consumer synchronization problem:
 
-- **Producers**: The Pickers harvest fruits (data) from the Tree (buffer 1) and place them into the Crate (buffer 2).
-- **Consumer**: The Loader takes the full Crate and "consumes" it by moving it to the Truck.
+- **Producers**: The Pickers harvest fruits from a shared array (the Tree) and place them into a bounded buffer (the Crate).
+- **Consumer**: The Loader takes the full buffer (the Crate) and "consumes" it by moving its contents to the Truck.
 
 ### 4.2 Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant P as Picker (Thread)
-    participant T as Tree (Resource)
-    participant C as Crate (Shared Buffer)
-    participant L as Loader (Thread)
+    participant P as Picker (OS Process)
+    participant IPC as Shared IPC State
+    participant L as Loader (OS Process)
 
-    P->>T: Acquire Tree Lock
-    T-->>P: Remove Fruit
-    P->>T: Release Tree Lock
+    P->>IPC: Acquire Tree Lock
+    IPC-->>P: Remove Fruit
+    P->>IPC: Release Tree Lock
     
-    P->>C: Wait for new_crate_ready
-    P->>C: Acquire Crate Lock
-    C-->>P: Add Fruit
+    P->>IPC: Wait for new_crate_ready Event
+    P->>IPC: Acquire Crate Lock
+    IPC-->>P: Add Fruit to Crate Array
     alt Crate is Full
-        P->>L: Signal crate_full
-        P->>C: Clear new_crate_ready
+        P->>L: Signal crate_full Event
+        P->>IPC: Clear new_crate_ready Event
     end
-    P->>C: Release Crate Lock
+    P->>IPC: Release Crate Lock
 
-    L->>C: Wait for crate_full
-    L->>C: Acquire Crate Lock
-    C-->>L: Move to Truck
-    L->>C: Furnish New Crate
-    L->>C: Signal new_crate_ready
-    L->>C: Release Crate Lock
+    L->>IPC: Wait for crate_full Event
+    L->>IPC: Acquire Crate Lock
+    IPC-->>L: Move Crate Array to Truck Array
+    L->>IPC: Furnish New Empty Crate
+    L->>P: Signal new_crate_ready Event
+    L->>IPC: Release Crate Lock
 ```
 
 ---
 
 ## 5. Implementation Deep Dive (Backend)
 
-### 5.1 Real-time Communication (SSE)
+### 5.1 Server-Sent Events (SSE) and The Message Queue
 
-The backend uses **Server-Sent Events (SSE)** via the `/stream` endpoint. This allows the server to "push" state changes (like `fruit_picked` or `lock_status`) to the frontend instantly, without the browser having to poll.
+**What is SSE?** Server-Sent Events allow a server to push real-time updates to the web browser over a single HTTP connection. 
 
-### 5.2 Robust Synchronization Fix
+**Why was it used?** It avoids UI polling overhead. SSE streams UI events smoothly (e.g., "fruit picked", "crate locked") exactly as they happen.
 
-Throughout development, a critical race condition was identified where pickers could "overflow" a crate beyond its 12-slot capacity if they were already waiting for the lock.
-**The Logic Fix:**
+**How does it work with Multiprocessing?** 
+Pickers and Loader live in separate memory spaces from Flask. They cannot access the UI socket. Instead, they use a `multiprocessing.Queue()`. 
+1. A Picker does an action.
+2. It pushes a dictionary into the `Queue`.
+3. A background thread inside Flask constantly listens to this `Queue`.
+4. The thread pushes data to browser SSE subscribers.
+
+### 5.2 Robust Synchronization Edge Case Fix
+
+A race condition was identified where pickers could "overflow" a crate beyond its capacity if multiple pickers were sleeping while waiting for the crate lock.
 
 ```python
 while not placed and sim["running"]:
-    sim["new_crate_ready"].wait() # Double-check condition
+    sim["new_crate_ready"].wait() # Sleep if loader is replacing crate
     with sim["crate_lock"]:
-        if len(sim["crate"]) < CRATE_CAPACITY:
-            # Atomic operation inside lock
+        if len(sim["crate"]) < sim["crate_capacity"]:
             sim["crate"].append(fruit)
             placed = True
 ```
 
-By placing the `wait` before the lock and the `len` check *inside* the lock, we ensure that no more than 12 fruits ever enter a crate, regardless of scheduling.
+By forcing the picker to re-evaluate `len` after waking up and obtaining the lock, we guarantee the strict fruit limit is never breached.
 
 ---
 
-## 6. Deployment Strategy
+## 6. Conclusion
 
-### 6.1 Render (Recommended)
-
-- **Engine**: Gunicorn with `eventlet` workers for async SSE handling.
-- **Constraint**: Must use `--workers 1` because the simulation state is stored in memory (`sim` dictionary). Multiple workers would create isolated, inconsistent simulations.
-
-### 6.2 PythonAnywhere
-
-- **WSGI Integration**: Requires a custom WSGI file to expose the Flask `app` as `application`.
-- **Limitation**: Free tier may experience timeouts on long-lived SSE connections.
-
----
-
-## 7. Conclusion
-
-The Spring Workers project successfully demonstrates how complex OS primitives come together to create a reliable, parallel system. The use of locks ensures data integrity, while signals facilitate efficient communication between independent execution units.
+The Spring Workers project successfully demonstrates how highly complex OS primitives—True Multiprocessing, IPC Shared Memory, Locks, and Events—come together to create a reliable, parallel system.
